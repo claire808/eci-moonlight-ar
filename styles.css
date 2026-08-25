@@ -199,25 +199,21 @@ html:lang(zh-TW) .welcome-copy h1,html:lang(zh-CN) .welcome-copy h1{
   font-size:10px;color:rgba(255,255,255,.74);white-space:nowrap;backdrop-filter:blur(12px);
 }
 .band-wrap{
-  position:absolute;z-index:8;top:23%;left:50%;transform:translateX(-50%);
-  width:min(74vw,360px);pointer-events:none;
-  /* Fade the very ends to transparent instead of a hard-cut edge — without
-     real hair occlusion (a later phase) the band can't tuck behind hair,
-     so a soft fade at least avoids a bandage-like hard boundary floating
-     over the hair on both sides. */
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 11%,#000 89%,transparent 100%);
-  mask-image:linear-gradient(90deg,transparent 0,#000 11%,#000 89%,transparent 100%);
+  position:absolute;z-index:8;top:20%;left:50%;transform:translateX(-50%);
+  width:min(78vw,380px);pointer-events:none;
 }
-/* Wide ribbed-knit headband, per reference photos: substantial height
-   (covers real forehead area, not a thin bracelet-like strip), matte
-   fabric — no glossy highlight — with a visible knit-rib texture. No hard
-   outline: a crisp high-contrast border is what reads as "bandage/plaster"
-   rather than fabric — definition now comes only from shading. */
+/* Alice-band / hair-hoop silhouette (per reference photo): thick and domed
+   across the crown, tapering to a point at both ends where it would
+   disappear behind the ears — not a flat bar. Shape comes from the
+   #hairHoopClip clip-path (see index.html); no border-radius/overflow
+   needed. filter:drop-shadow (not box-shadow) so the shadow follows the
+   clipped silhouette instead of the element's rectangular box. */
 .band{
   position:relative;
-  height:92px;border-radius:999px;background-color:#204a7a;
-  box-shadow:0 12px 24px rgba(0,0,0,.3),inset 0 0 0 1px rgba(255,255,255,.06);
-  display:flex;align-items:center;justify-content:center;overflow:hidden;background-repeat:repeat;
+  height:130px;background-color:#204a7a;
+  clip-path:url(#hairHoopClip);
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.32));
+  background-repeat:repeat;
 }
 /* Knit ribbing — fine parallel ridges, blended into the fill color rather
    than sitting on top of it, so it reads as woven fabric, not a sticker. */
@@ -232,8 +228,12 @@ html:lang(zh-TW) .welcome-copy h1,html:lang(zh-CN) .welcome-copy h1{
   content:'';position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(255,255,255,.10) 0,rgba(255,255,255,0) 32%,rgba(0,0,0,0) 62%,rgba(0,0,0,.16) 100%);
 }
-.band span{position:relative;z-index:1;font-weight:900;letter-spacing:.2em;color:#fff1bf;text-shadow:0 1px 3px rgba(0,0,0,.35);
-  white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
+/* Text sits at the shape's visible-thick-zone center (~30% down the box),
+   not the box's geometric middle (50%) — the hair-hoop clip only fills
+   roughly the top 55%, so 50% centering would clip the text away. */
+.band span{position:absolute;z-index:1;top:30%;left:50%;transform:translate(-50%,-50%);
+  font-weight:900;letter-spacing:.2em;color:#fff1bf;text-shadow:0 1px 3px rgba(0,0,0,.35);
+  white-space:nowrap;max-width:78%;overflow:hidden;text-overflow:ellipsis}
 
 .dock{
   position:absolute;z-index:30;left:0;right:0;bottom:0;

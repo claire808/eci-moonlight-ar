@@ -5,9 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#071229">
 <title>ECI Moonlight AR</title>
-<link rel="stylesheet" href="styles.css?v=2.9">
+<link rel="stylesheet" href="styles.css?v=3.0">
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Alice-band silhouette: thick/domed in the middle, tapering to a
+         point at both ends (where a real hair hoop narrows and disappears
+         behind the ears) — not a flat bar. objectBoundingBox so it scales
+         to whatever size/aspect the .band element actually renders at. -->
+    <clipPath id="hairHoopClip" clipPathUnits="objectBoundingBox">
+      <path d="M0.03,0.85 C0.22,0.05 0.78,0.05 0.97,0.85 C0.78,0.55 0.22,0.55 0.03,0.85 Z"/>
+    </clipPath>
+  </defs>
+</svg>
 <div class="app">
 
   <!-- ============ WELCOME ============ -->
@@ -143,6 +154,6 @@
   <canvas id="captureCanvas" class="hidden"></canvas>
 </div>
 <div class="landscape-note" data-i18n="portraitOnly">Please rotate your phone back to portrait mode.</div>
-<script src="app.js?v=2.9"></script>
+<script src="app.js?v=3.0"></script>
 </body>
 </html>

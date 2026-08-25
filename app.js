@@ -269,7 +269,10 @@ function cssPattern(id){
 }
 function updateBand(){
   band.style.backgroundColor=bandColor;
-  band.style.height=currentStyle==='wide'?'112px':currentStyle==='sport'?'78px':'92px';
+  // Taller than a flat-bar band would need: the hair-hoop clip-path only
+  // fills roughly the top ~55% of the box (the domed part), so the box
+  // itself has to be taller for the visible band to read as substantial.
+  band.style.height=currentStyle==='wide'?'158px':currentStyle==='sport'?'110px':'130px';
   // border-radius stays the CSS default (999px pill) for every style — see styles.css .band
   const pattern=cssPattern(bandPattern);
   const tile=PATTERN_TILE[bandPattern]?`${PATTERN_TILE[bandPattern]}px ${PATTERN_TILE[bandPattern]}px`:'auto';
@@ -339,7 +342,7 @@ function drawGeoMotif(c,cx,cy,s){
   c.restore();
 }
 function drawPatternOnCanvas(c,x,y,w,h){
-  c.save();c.beginPath();roundRect(c,x,y,w,h,h/2);c.clip(); // pill shape, matches the live .band preview
+  c.save();hairHoopPath(c,x,y,w,h);c.clip(); // hair-hoop shape, matches the live .band preview
   const scale=h/54; // 54px = the classic-style live-preview band height these tiles were designed against
   if(bandPattern==='moon'){
     const tile=PATTERN_TILE.moon*scale;
@@ -359,10 +362,24 @@ function drawPatternOnCanvas(c,x,y,w,h){
   c.restore();
 }
 function roundRect(c,x,y,w,h,r){if(c.roundRect){c.beginPath();c.roundRect(x,y,w,h,r)}else{c.beginPath();c.rect(x,y,w,h)}}
+// Canvas equivalent of the CSS #hairHoopClip path (index.html) — same
+// fractional coordinates, so the exported photo's band silhouette matches
+// the live preview's tapered Alice-band shape exactly.
+function hairHoopPath(c,x,y,w,h){
+  const p=(fx,fy)=>[x+fx*w,y+fy*h];
+  const [x0,y0]=p(0.03,0.85),[x1,y1]=p(0.97,0.85);
+  const [cx1,cy1]=p(0.22,0.05),[cx2,cy2]=p(0.78,0.05);
+  const [cx3,cy3]=p(0.78,0.55),[cx4,cy4]=p(0.22,0.55);
+  c.beginPath();
+  c.moveTo(x0,y0);
+  c.bezierCurveTo(cx1,cy1,cx2,cy2,x1,y1);
+  c.bezierCurveTo(cx3,cy3,cx4,cy4,x0,y0);
+  c.closePath();
+}
 // Knit-rib texture for the exported photo, matching the live CSS `.band::before`
 // (a repeating-linear-gradient at 100deg) so the band reads as fabric there too.
 function drawRibTexture(c,x,y,w,h){
-  c.save();c.beginPath();roundRect(c,x,y,w,h,h/2);c.clip();
+  c.save();hairHoopPath(c,x,y,w,h);c.clip();
   const scale=h/54, spacing=4.5*scale, tilt=h*Math.tan(10*Math.PI/180);
   c.strokeStyle='rgba(0,0,0,.16)';c.lineWidth=Math.max(1,2*scale);
   for(let lx=x-tilt;lx<x+w+tilt;lx+=spacing){c.beginPath();c.moveTo(lx,y);c.lineTo(lx+tilt,y+h);c.stroke()}
@@ -404,11 +421,11 @@ document.getElementById('captureBtn').onclick=()=>{
     const t2=mapLandmarkToBox(lastFaceLandmarks[356].x,lastFaceLandmarks[356].y,vw,vh,w,h,mirror,'stretch');
     rollRad=mapRollAngle(Math.atan2(lastFaceLandmarks[356].y-lastFaceLandmarks[127].y,lastFaceLandmarks[356].x-lastFaceLandmarks[127].x),mirror);
     bw=Math.hypot(t2.x-t1.x,t2.y-t1.y)*1.7;
-    bh=currentStyle==='wide'?h*0.133:currentStyle==='sport'?h*0.088:h*0.11;
+    bh=currentStyle==='wide'?h*0.188:currentStyle==='sport'?h*0.124:h*0.155;
     bx=anchor.x-bw/2; by=anchor.y-bh/2;
   } else { // fallback: no face was ever tracked this session — today's exact fixed box, unchanged
     bw=w*0.7; bx=(w-bw)/2;
-    bh=currentStyle==='wide'?h*0.133:currentStyle==='sport'?h*0.088:h*0.11; by=h*0.30;
+    bh=currentStyle==='wide'?h*0.188:currentStyle==='sport'?h*0.124:h*0.155; by=h*0.30;
   }
 
   // Draw the band on its own offscreen canvas (transparent background), so the
@@ -418,25 +435,19 @@ document.getElementById('captureBtn').onclick=()=>{
   const bandCanvas=document.createElement('canvas'); bandCanvas.width=w; bandCanvas.height=h;
   const bc=bandCanvas.getContext('2d');
   bc.save(); bc.translate(bx+bw/2,by+bh/2); bc.rotate(rollRad); bc.translate(-(bx+bw/2),-(by+bh/2));
-  bc.fillStyle=bandColor;roundRect(bc,bx,by,bw,bh,bh/2);bc.fill();drawPatternOnCanvas(bc,bx,by,bw,bh);drawRibTexture(bc,bx,by,bw,bh);
+  bc.fillStyle=bandColor;hairHoopPath(bc,bx,by,bw,bh);bc.fill();drawPatternOnCanvas(bc,bx,by,bw,bh);drawRibTexture(bc,bx,by,bw,bh);
   const finish=()=>{
-    bc.fillStyle='#fff0bd';bc.font=`700 ${Math.round(bh*0.42)}px Arial`;bc.textAlign='center';
-    bc.fillText(bandTextValue||'ECI',bx+bw/2,by+bh/2+bh*0.15);
-    // Fade the band's own left/right ends to transparent (matches the live
-    // CSS .band-wrap mask) — no real hair occlusion yet, so this at least
-    // avoids a hard-edged "sticker" boundary. Gradient is defined in the
-    // still-rotated coordinate space, so it follows head tilt correctly.
-    bc.save();roundRect(bc,bx,by,bw,bh,bh/2);bc.clip();
-    const fade=bc.createLinearGradient(bx,0,bx+bw,0);
-    fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(0.11,'rgba(0,0,0,1)');
-    fade.addColorStop(0.89,'rgba(0,0,0,1)');fade.addColorStop(1,'rgba(0,0,0,0)');
-    bc.globalCompositeOperation='destination-in';bc.fillStyle=fade;bc.fillRect(bx,by,bw,bh);
-    bc.restore(); bc.restore();
+    // Text sits at the shape's visible-thick-zone center (~30% down),
+    // matching the live CSS .band span — the box's geometric middle (50%)
+    // falls outside the hair-hoop clip's visible area.
+    bc.fillStyle='#fff0bd';bc.font=`700 ${Math.round(bh*0.22)}px Arial`;bc.textAlign='center';bc.textBaseline='middle';
+    bc.fillText(bandTextValue||'ECI',bx+bw/2,by+bh*0.30);
+    bc.restore();
     c.drawImage(bandCanvas,0,0);
     captureImage.src=captureCanvas.toDataURL('image/jpeg',.92);
     showScreen('capture');
   };
-  if(drawingData){const im=new Image();im.onload=()=>{roundRect(bc,bx,by,bw,bh,bh/2);bc.clip();bc.drawImage(im,bx,by,bw,bh);finish()};im.src=drawingData} else finish();
+  if(drawingData){const im=new Image();im.onload=()=>{hairHoopPath(bc,bx,by,bw,bh);bc.clip();bc.drawImage(im,bx,by,bw,bh);finish()};im.src=drawingData} else finish();
 };
 document.getElementById('designAgain').onclick=()=>showScreen('studio');
 
