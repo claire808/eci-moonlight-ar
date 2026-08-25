@@ -51,7 +51,12 @@ function updateBeautyOverlay(landmarks,camRect,vw,vh,mirror){
   const cx=(minX+maxX)/2, cy=(minY+maxY)/2, rx=(maxX-minX)/2, ry=(maxY-minY)/2;
   const blurPx=beautyBlurPxFor(beautyStrength,maxX-minX);
   const poly=`polygon(${pts.map(p=>`${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`).join(',')})`;
-  const maskGrad=`radial-gradient(ellipse ${(rx*1.02).toFixed(1)}px ${(ry*1.02).toFixed(1)}px at ${cx.toFixed(1)}px ${cy.toFixed(1)}px, #fff 60%, transparent 100%)`;
+  // The face-oval polygon isn't a true ellipse (it juts toward the chin/temple
+  // corners), so a mask ellipse sized tight to its bounding box cuts into
+  // those corners unevenly — a patchy blur boundary. Size the mask ellipse
+  // generously and fade very gradually instead, so the mismatch between the
+  // two shapes blends away rather than showing as a hard, uneven edge.
+  const maskGrad=`radial-gradient(ellipse ${(rx*1.15).toFixed(1)}px ${(ry*1.2).toFixed(1)}px at ${cx.toFixed(1)}px ${cy.toFixed(1)}px, #fff 25%, transparent 100%)`;
   beautyOverlay.style.clipPath=beautyOverlay.style.webkitClipPath=poly; // hard safety boundary — never bleeds past the tracked face
   beautyOverlay.style.maskImage=beautyOverlay.style.webkitMaskImage=maskGrad; // the actual soft visible edge
   beautyOverlay.style.backdropFilter=beautyOverlay.style.webkitBackdropFilter=`blur(${blurPx.toFixed(1)}px)`;
@@ -133,7 +138,7 @@ function applyTrackedBand(landmarks){
   const t1=mapLandmarkToBox(landmarks[127].x,landmarks[127].y,vw,vh,camRect.width,camRect.height,mirror,'cover');
   const t2=mapLandmarkToBox(landmarks[356].x,landmarks[356].y,vw,vh,camRect.width,camRect.height,mirror,'cover');
   const rollRad=mapRollAngle(Math.atan2(landmarks[356].y-landmarks[127].y,landmarks[356].x-landmarks[127].x),mirror);
-  const scale=(Math.hypot(t2.x-t1.x,t2.y-t1.y)*1.45)/bandNaturalWidthPx; // 1.45 = fit factor, tune on device
+  const scale=(Math.hypot(t2.x-t1.x,t2.y-t1.y)*1.7)/bandNaturalWidthPx; // 1.7 = fit factor (temple-to-temple -> band width), tune on device
   lastFaceLandmarks=landmarks;
   updateBeautyOverlay(landmarks,camRect,vw,vh,mirror);
   bandWrap.style.left='0px'; bandWrap.style.top='0px';
@@ -398,7 +403,7 @@ document.getElementById('captureBtn').onclick=()=>{
     const t1=mapLandmarkToBox(lastFaceLandmarks[127].x,lastFaceLandmarks[127].y,vw,vh,w,h,mirror,'stretch');
     const t2=mapLandmarkToBox(lastFaceLandmarks[356].x,lastFaceLandmarks[356].y,vw,vh,w,h,mirror,'stretch');
     rollRad=mapRollAngle(Math.atan2(lastFaceLandmarks[356].y-lastFaceLandmarks[127].y,lastFaceLandmarks[356].x-lastFaceLandmarks[127].x),mirror);
-    bw=Math.hypot(t2.x-t1.x,t2.y-t1.y)*1.45;
+    bw=Math.hypot(t2.x-t1.x,t2.y-t1.y)*1.7;
     bh=currentStyle==='wide'?h*0.133:currentStyle==='sport'?h*0.088:h*0.11;
     bx=anchor.x-bw/2; by=anchor.y-bh/2;
   } else { // fallback: no face was ever tracked this session — today's exact fixed box, unchanged
@@ -406,16 +411,32 @@ document.getElementById('captureBtn').onclick=()=>{
     bh=currentStyle==='wide'?h*0.133:currentStyle==='sport'?h*0.088:h*0.11; by=h*0.30;
   }
 
-  c.save(); c.translate(bx+bw/2,by+bh/2); c.rotate(rollRad); c.translate(-(bx+bw/2),-(by+bh/2));
-  c.fillStyle=bandColor;c.strokeStyle='#e7b54e';c.lineWidth=5;roundRect(c,bx,by,bw,bh,bh/2);c.fill();c.stroke();drawPatternOnCanvas(c,bx,by,bw,bh);drawRibTexture(c,bx,by,bw,bh);
+  // Draw the band on its own offscreen canvas (transparent background), so the
+  // edge-fade below can reveal the real photo underneath via alpha — fading
+  // directly on the main canvas would just fade to black, since those camera
+  // pixels are already overwritten once the band is painted on top of them.
+  const bandCanvas=document.createElement('canvas'); bandCanvas.width=w; bandCanvas.height=h;
+  const bc=bandCanvas.getContext('2d');
+  bc.save(); bc.translate(bx+bw/2,by+bh/2); bc.rotate(rollRad); bc.translate(-(bx+bw/2),-(by+bh/2));
+  bc.fillStyle=bandColor;roundRect(bc,bx,by,bw,bh,bh/2);bc.fill();drawPatternOnCanvas(bc,bx,by,bw,bh);drawRibTexture(bc,bx,by,bw,bh);
   const finish=()=>{
-    c.fillStyle='#fff0bd';c.font=`700 ${Math.round(bh*0.42)}px Arial`;c.textAlign='center';
-    c.fillText(bandTextValue||'ECI',bx+bw/2,by+bh/2+bh*0.15);
-    c.restore();
+    bc.fillStyle='#fff0bd';bc.font=`700 ${Math.round(bh*0.42)}px Arial`;bc.textAlign='center';
+    bc.fillText(bandTextValue||'ECI',bx+bw/2,by+bh/2+bh*0.15);
+    // Fade the band's own left/right ends to transparent (matches the live
+    // CSS .band-wrap mask) — no real hair occlusion yet, so this at least
+    // avoids a hard-edged "sticker" boundary. Gradient is defined in the
+    // still-rotated coordinate space, so it follows head tilt correctly.
+    bc.save();roundRect(bc,bx,by,bw,bh,bh/2);bc.clip();
+    const fade=bc.createLinearGradient(bx,0,bx+bw,0);
+    fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(0.11,'rgba(0,0,0,1)');
+    fade.addColorStop(0.89,'rgba(0,0,0,1)');fade.addColorStop(1,'rgba(0,0,0,0)');
+    bc.globalCompositeOperation='destination-in';bc.fillStyle=fade;bc.fillRect(bx,by,bw,bh);
+    bc.restore(); bc.restore();
+    c.drawImage(bandCanvas,0,0);
     captureImage.src=captureCanvas.toDataURL('image/jpeg',.92);
     showScreen('capture');
   };
-  if(drawingData){const im=new Image();im.onload=()=>{roundRect(c,bx,by,bw,bh,bh/2);c.clip();c.drawImage(im,bx,by,bw,bh);finish()};im.src=drawingData} else finish();
+  if(drawingData){const im=new Image();im.onload=()=>{roundRect(bc,bx,by,bw,bh,bh/2);bc.clip();bc.drawImage(im,bx,by,bw,bh);finish()};im.src=drawingData} else finish();
 };
 document.getElementById('designAgain').onclick=()=>showScreen('studio');
 
