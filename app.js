@@ -35,14 +35,25 @@ let lastFaceLandmarks=null; // raw MediaPipe landmarks from the last successful 
 const FACE_OVAL_LOOP=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
 let beautyStrength=Number(localStorage.getItem('eci-beauty') ?? 6); // 0–10, default 6 — visible without the user having to discover the slider
 const beautyOverlay=document.getElementById('beautyOverlay');
-function beautyBlurPxFor(strength,faceWidthPx){ return (strength/10)*faceWidthPx*0.08 }
+// NOTE: deliberately conservative — a `filter:blur()` layered on top of this
+// element used to be here for "edge feathering", but `filter` blurs the
+// element's ENTIRE rendered output uniformly, not just the edge, so it was
+// silently stacking with `backdrop-filter` and wiping out facial features
+// (confirmed on-device). Edge softness now comes from a mask-image radial
+// gradient instead, which fades alpha near the boundary without adding any
+// extra blur to the interior.
+function beautyBlurPxFor(strength,faceWidthPx){ return (strength/10)*faceWidthPx*0.035 }
 function updateBeautyOverlay(landmarks,camRect,vw,vh,mirror){
   if(!landmarks||beautyStrength<=0){ clearBeautyOverlay(); return }
   const pts=FACE_OVAL_LOOP.map(i=>mapLandmarkToBox(landmarks[i].x,landmarks[i].y,vw,vh,camRect.width,camRect.height,mirror,'cover'));
-  const xs=pts.map(p=>p.x), faceW=Math.max(...xs)-Math.min(...xs);
-  const blurPx=beautyBlurPxFor(beautyStrength,faceW);
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+  const cx=(minX+maxX)/2, cy=(minY+maxY)/2, rx=(maxX-minX)/2, ry=(maxY-minY)/2;
+  const blurPx=beautyBlurPxFor(beautyStrength,maxX-minX);
   const poly=`polygon(${pts.map(p=>`${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`).join(',')})`;
-  beautyOverlay.style.clipPath=beautyOverlay.style.webkitClipPath=poly;
+  const maskGrad=`radial-gradient(ellipse ${(rx*1.02).toFixed(1)}px ${(ry*1.02).toFixed(1)}px at ${cx.toFixed(1)}px ${cy.toFixed(1)}px, #fff 60%, transparent 100%)`;
+  beautyOverlay.style.clipPath=beautyOverlay.style.webkitClipPath=poly; // hard safety boundary — never bleeds past the tracked face
+  beautyOverlay.style.maskImage=beautyOverlay.style.webkitMaskImage=maskGrad; // the actual soft visible edge
   beautyOverlay.style.backdropFilter=beautyOverlay.style.webkitBackdropFilter=`blur(${blurPx.toFixed(1)}px)`;
   beautyOverlay.classList.add('active');
 }

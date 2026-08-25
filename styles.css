@@ -173,13 +173,16 @@ html:lang(zh-TW) .welcome-copy h1,html:lang(zh-CN) .welcome-copy h1{
 .retry-btn{min-height:44px;border-radius:14px;padding:0 18px;background:var(--gold);color:#13213b;font-weight:850}
 .vignette{position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(2,7,20,.44) 0,transparent 24%,transparent 48%,rgba(2,7,20,.78) 100%)}
-/* Beauty (skin-smoothing) overlay — clip-path is redrawn to the tracked
-   face-oval every frame (app.js), backdrop-filter blur amount comes from
-   the strength slider. The outer `filter:blur()` softens the otherwise
-   hard clip-path edge into a natural feather. */
+/* Beauty (skin-smoothing) overlay — clip-path + mask-image are redrawn to
+   the tracked face-oval every frame (app.js), backdrop-filter blur amount
+   comes from the strength slider. Edge softness comes from the mask's
+   radial-gradient alpha falloff, NOT from a `filter:blur()` on this element
+   — that was tried first and turned out to blur the whole interior too
+   (confirmed on-device: it erased facial features), since `filter` applies
+   to the element's entire rendered output, not just its boundary. */
 .beauty-overlay{
   position:absolute;inset:0;z-index:7;pointer-events:none;
-  opacity:0;filter:blur(8px);
+  opacity:0;
   -webkit-backdrop-filter:blur(0px);backdrop-filter:blur(0px);
   transition:opacity .15s ease;
 }
