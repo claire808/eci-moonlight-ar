@@ -199,21 +199,30 @@ html:lang(zh-TW) .welcome-copy h1,html:lang(zh-CN) .welcome-copy h1{
   font-size:10px;color:rgba(255,255,255,.74);white-space:nowrap;backdrop-filter:blur(12px);
 }
 .band-wrap{
-  position:absolute;z-index:8;top:26%;left:50%;transform:translateX(-50%);
+  position:absolute;z-index:8;top:23%;left:50%;transform:translateX(-50%);
   width:min(74vw,360px);pointer-events:none;
 }
+/* Wide ribbed-knit headband, per reference photos: substantial height
+   (covers real forehead area, not a thin bracelet-like strip), matte
+   fabric — no glossy highlight — with a visible knit-rib texture. */
 .band{
   position:relative;
-  height:54px;border-radius:999px;background-color:#204a7a; /* pill shape — a straight rounded-rect read as "just a box" */
+  height:92px;border-radius:999px;background-color:#204a7a;
   border:2px solid rgba(246,221,159,.9);box-shadow:0 12px 24px rgba(0,0,0,.3),inset 0 0 0 1px rgba(255,255,255,.08);
   display:flex;align-items:center;justify-content:center;overflow:hidden;background-repeat:repeat;
 }
-/* Fabric sheen — soft highlight along the top edge, soft shadow along the
-   bottom, so the band reads as a rounded cloth ribbon instead of a flat
-   color chip. Purely decorative, sits above the pattern/color fill. */
+/* Knit ribbing — fine parallel ridges, blended into the fill color rather
+   than sitting on top of it, so it reads as woven fabric, not a sticker. */
+.band::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:repeating-linear-gradient(100deg,rgba(0,0,0,.16) 0 2px,rgba(255,255,255,.07) 2px 4.5px);
+  mix-blend-mode:overlay;
+}
+/* Matte shading — soft, low-contrast falloff top/bottom instead of the
+   previous glossy plastic-looking streak. */
 .band::after{
   content:'';position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.24) 0,rgba(255,255,255,0) 38%,rgba(0,0,0,0) 62%,rgba(0,0,0,.2) 100%);
+  background:linear-gradient(180deg,rgba(255,255,255,.10) 0,rgba(255,255,255,0) 32%,rgba(0,0,0,0) 62%,rgba(0,0,0,.16) 100%);
 }
 .band span{position:relative;z-index:1;font-weight:900;letter-spacing:.2em;color:#fff1bf;text-shadow:0 1px 3px rgba(0,0,0,.35);
   white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}

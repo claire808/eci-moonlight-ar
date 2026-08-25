@@ -264,7 +264,7 @@ function cssPattern(id){
 }
 function updateBand(){
   band.style.backgroundColor=bandColor;
-  band.style.height=currentStyle==='wide'?'68px':currentStyle==='sport'?'46px':'54px';
+  band.style.height=currentStyle==='wide'?'112px':currentStyle==='sport'?'78px':'92px';
   // border-radius stays the CSS default (999px pill) for every style — see styles.css .band
   const pattern=cssPattern(bandPattern);
   const tile=PATTERN_TILE[bandPattern]?`${PATTERN_TILE[bandPattern]}px ${PATTERN_TILE[bandPattern]}px`:'auto';
@@ -354,6 +354,17 @@ function drawPatternOnCanvas(c,x,y,w,h){
   c.restore();
 }
 function roundRect(c,x,y,w,h,r){if(c.roundRect){c.beginPath();c.roundRect(x,y,w,h,r)}else{c.beginPath();c.rect(x,y,w,h)}}
+// Knit-rib texture for the exported photo, matching the live CSS `.band::before`
+// (a repeating-linear-gradient at 100deg) so the band reads as fabric there too.
+function drawRibTexture(c,x,y,w,h){
+  c.save();c.beginPath();roundRect(c,x,y,w,h,h/2);c.clip();
+  const scale=h/54, spacing=4.5*scale, tilt=h*Math.tan(10*Math.PI/180);
+  c.strokeStyle='rgba(0,0,0,.16)';c.lineWidth=Math.max(1,2*scale);
+  for(let lx=x-tilt;lx<x+w+tilt;lx+=spacing){c.beginPath();c.moveTo(lx,y);c.lineTo(lx+tilt,y+h);c.stroke()}
+  c.strokeStyle='rgba(255,255,255,.07)';c.lineWidth=Math.max(1,scale);
+  for(let lx=x-tilt+spacing/2;lx<x+w+tilt;lx+=spacing){c.beginPath();c.moveTo(lx,y);c.lineTo(lx+tilt,y+h);c.stroke()}
+  c.restore();
+}
 // One-time (per capture, not per-frame) equivalent of the live beauty overlay:
 // draw a blurred copy of the frame, mask it to a feather-edged face-oval, and
 // composite it back over the sharp base frame already drawn on `c`.
@@ -388,15 +399,15 @@ document.getElementById('captureBtn').onclick=()=>{
     const t2=mapLandmarkToBox(lastFaceLandmarks[356].x,lastFaceLandmarks[356].y,vw,vh,w,h,mirror,'stretch');
     rollRad=mapRollAngle(Math.atan2(lastFaceLandmarks[356].y-lastFaceLandmarks[127].y,lastFaceLandmarks[356].x-lastFaceLandmarks[127].x),mirror);
     bw=Math.hypot(t2.x-t1.x,t2.y-t1.y)*1.45;
-    bh=currentStyle==='wide'?h*0.078:currentStyle==='sport'?h*0.052:h*0.065;
+    bh=currentStyle==='wide'?h*0.133:currentStyle==='sport'?h*0.088:h*0.11;
     bx=anchor.x-bw/2; by=anchor.y-bh/2;
   } else { // fallback: no face was ever tracked this session — today's exact fixed box, unchanged
     bw=w*0.7; bx=(w-bw)/2;
-    bh=currentStyle==='wide'?h*0.078:currentStyle==='sport'?h*0.052:h*0.065; by=h*0.30;
+    bh=currentStyle==='wide'?h*0.133:currentStyle==='sport'?h*0.088:h*0.11; by=h*0.30;
   }
 
   c.save(); c.translate(bx+bw/2,by+bh/2); c.rotate(rollRad); c.translate(-(bx+bw/2),-(by+bh/2));
-  c.fillStyle=bandColor;c.strokeStyle='#e7b54e';c.lineWidth=5;roundRect(c,bx,by,bw,bh,bh/2);c.fill();c.stroke();drawPatternOnCanvas(c,bx,by,bw,bh);
+  c.fillStyle=bandColor;c.strokeStyle='#e7b54e';c.lineWidth=5;roundRect(c,bx,by,bw,bh,bh/2);c.fill();c.stroke();drawPatternOnCanvas(c,bx,by,bw,bh);drawRibTexture(c,bx,by,bw,bh);
   const finish=()=>{
     c.fillStyle='#fff0bd';c.font=`700 ${Math.round(bh*0.42)}px Arial`;c.textAlign='center';
     c.fillText(bandTextValue||'ECI',bx+bw/2,by+bh/2+bh*0.15);
