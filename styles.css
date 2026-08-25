@@ -173,6 +173,17 @@ html:lang(zh-TW) .welcome-copy h1,html:lang(zh-CN) .welcome-copy h1{
 .retry-btn{min-height:44px;border-radius:14px;padding:0 18px;background:var(--gold);color:#13213b;font-weight:850}
 .vignette{position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(2,7,20,.44) 0,transparent 24%,transparent 48%,rgba(2,7,20,.78) 100%)}
+/* Beauty (skin-smoothing) overlay — clip-path is redrawn to the tracked
+   face-oval every frame (app.js), backdrop-filter blur amount comes from
+   the strength slider. The outer `filter:blur()` softens the otherwise
+   hard clip-path edge into a natural feather. */
+.beauty-overlay{
+  position:absolute;inset:0;z-index:7;pointer-events:none;
+  opacity:0;filter:blur(8px);
+  -webkit-backdrop-filter:blur(0px);backdrop-filter:blur(0px);
+  transition:opacity .15s ease;
+}
+.beauty-overlay.active{opacity:1}
 .prototype{
   position:absolute;z-index:12;left:50%;transform:translateX(-50%);
   /* Tracks the same clamp() as .brand-logo--sm's height so the badge
@@ -189,11 +200,19 @@ html:lang(zh-TW) .welcome-copy h1,html:lang(zh-CN) .welcome-copy h1{
   width:min(74vw,360px);pointer-events:none;
 }
 .band{
-  height:54px;border-radius:21px 21px 18px 18px;background-color:#204a7a;
+  position:relative;
+  height:54px;border-radius:999px;background-color:#204a7a; /* pill shape — a straight rounded-rect read as "just a box" */
   border:2px solid rgba(246,221,159,.9);box-shadow:0 12px 24px rgba(0,0,0,.3),inset 0 0 0 1px rgba(255,255,255,.08);
   display:flex;align-items:center;justify-content:center;overflow:hidden;background-repeat:repeat;
 }
-.band span{font-weight:900;letter-spacing:.2em;color:#fff1bf;text-shadow:0 1px 3px rgba(0,0,0,.35);
+/* Fabric sheen — soft highlight along the top edge, soft shadow along the
+   bottom, so the band reads as a rounded cloth ribbon instead of a flat
+   color chip. Purely decorative, sits above the pattern/color fill. */
+.band::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.24) 0,rgba(255,255,255,0) 38%,rgba(0,0,0,0) 62%,rgba(0,0,0,.2) 100%);
+}
+.band span{position:relative;z-index:1;font-weight:900;letter-spacing:.2em;color:#fff1bf;text-shadow:0 1px 3px rgba(0,0,0,.35);
   white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
 
 .dock{
@@ -202,7 +221,7 @@ html:lang(zh-TW) .welcome-copy h1,html:lang(zh-CN) .welcome-copy h1{
   background:linear-gradient(180deg,rgba(7,18,41,0),rgba(7,18,41,.75) 13%,rgba(7,18,41,.97) 40%);
   backdrop-filter:blur(10px);
 }
-.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px}
+.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:8px}
 .tab{min-height:54px;border-radius:14px;color:rgba(255,255,255,.72);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .tab span{font-size:18px}
@@ -311,6 +330,8 @@ html:lang(zh-TW) .welcome-copy h1,html:lang(zh-CN) .welcome-copy h1{
 }
 .greeting img{width:100%;min-height:0;flex:1;object-fit:cover;border-radius:20px;background:#1c2740;border:1px solid rgba(255,255,255,.09)}
 .card-copy{padding:14px 4px 4px}
+.greeting-decor{flex:0 0 44px;margin-top:8px;background-repeat:no-repeat;background-position:center;background-size:100% 100%;opacity:.95;transition:opacity .15s ease}
+.greeting-decor.off{opacity:0}
 .card-copy h2{font-family:Georgia,"Times New Roman",serif;font-weight:500;font-size:clamp(1.3rem,4vw,1.8rem);line-height:1.05;margin:2px 0 8px}
 .card-copy p:last-child{font-size:12px;line-height:1.5;color:rgba(255,255,255,.68);margin:0}
 .capture-actions{width:100%;max-width:360px;display:grid;gap:8px}

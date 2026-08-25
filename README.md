@@ -1,13 +1,22 @@
-# ECI Moonlight AR — V2.2 Responsive UI
+# ECI Moonlight AR — V2.2 Responsive UI + Phase 2 face tracking (milestone 1)
 
-This is the ECI Mid-Autumn Web AR experience. Current phase (V2.2): the four
-core screens — Welcome, AR Studio, Draw Editor, Greeting Card — rebuilt on a
-single, non-conflicting responsive architecture. Camera preview (getUserMedia)
-is wired up as a live preview only; face tracking / MediaPipe / AR headband
-placement is the next phase and has **not** been started.
+This is the ECI Mid-Autumn Web AR experience. The four core screens —
+Welcome, AR Studio, Draw Editor, Greeting Card — are built on a single,
+non-conflicting responsive architecture. AR Studio now tracks your face live
+via MediaPipe Face Landmarker: the headband follows head position, scale
+(distance from camera) and roll rotation in real time, and the exported
+capture/greeting-card photo matches what was previewed. Occlusion (real hair
+draping in front of the band) is **not** done yet — see "Current limitation"
+below.
 
-Open `index.html` (served over HTTP/HTTPS — `file://` blocks camera access)
-to review the flow:
+Open `index.html` **served over HTTPS** — required both for `getUserMedia`
+(camera) and for the MediaPipe WASM/model CDN fetch to work at all; `file://`
+and plain `http://` both block it. Live HTTPS test URL:
+`https://claire808.github.io/eci-moonlight-ar/` (GitHub Pages, deployed from
+`main`/root). For local iteration without a full deploy cycle, `python -m
+http.server 5173` still works for everything except camera/tracking.
+
+Review the flow:
 
 1. Welcome
 2. AR Studio (style / color / pattern / draw / text / capture)
@@ -65,9 +74,14 @@ never reloads or resets state. The greeting-card export is a fixed
 
 ## Current limitation
 
-The AR headband is a CSS/canvas mock, not tracked to a face. Capture
-composites the camera frame + headband (color/pattern/drawing/text) into one
-image; there is no face-anchored positioning yet — that starts in phase two
-(HTTPS camera testing → MediaPipe Face Landmarker → forehead landmarks →
-headband position/scale/rotation → occlusion → capture integration), which
-has not been started per the agreed scope for this phase.
+The headband now tracks the face (MediaPipe Face Landmarker: forehead anchor
+= landmark 10, temple points 127/356 for scale + roll — see `app.js`), and
+capture composites the camera frame + tracked headband (color/pattern/
+drawing/text) into one image at the same tracked position. What's still
+missing is **occlusion**: real hair does not yet draw in front of the band
+where it should, so the band currently always renders on top of hair rather
+than realistically behind/under it in places. That's the next milestone —
+it means hair segmentation (e.g. a MediaPipe image segmenter), not a virtual
+hairstyle asset; the product direction is the user's own real hair, not a
+synthetic one. If tracking ever fails to load or no face is detected, the
+band falls back to the original static centered placement.

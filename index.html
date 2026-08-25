@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#071229">
 <title>ECI Moonlight AR</title>
-<link rel="stylesheet" href="styles.css?v=2.3">
+<link rel="stylesheet" href="styles.css?v=2.6">
 </head>
 <body>
 <div class="app">
@@ -48,6 +48,7 @@
       </div>
     </div>
     <div class="vignette"></div>
+    <div id="beautyOverlay" class="beauty-overlay" aria-hidden="true"></div>
 
     <header class="topbar">
       <button id="backHome" class="icon-btn" aria-label="Back">‹</button>
@@ -67,6 +68,7 @@
         <button class="tab" data-tool="pattern"><span>✦</span><b data-i18n="pattern">PATTERN</b></button>
         <button class="tab" data-tool="draw"><span>✎</span><b data-i18n="draw">DRAW</b></button>
         <button class="tab" data-tool="text"><span>T</span><b data-i18n="text">TEXT</b></button>
+        <button class="tab" data-tool="beauty"><span>✨</span><b data-i18n="beauty">BEAUTY</b></button>
       </div>
       <div id="toolSheet" class="sheet"></div>
       <div class="capture-row">
@@ -105,6 +107,7 @@
   <section id="captureScreen" class="screen capture-screen">
     <header class="topbar">
       <img class="brand-logo brand-logo--sm" src="assets/eci-logo-white.png" alt="ECI">
+      <button id="decorToggle" class="icon-btn" aria-pressed="true" aria-label="Toggle decorations">🎊</button>
       <button class="lang-btn" data-open-language>🌐 <span data-i18n="langShort">EN</span></button>
     </header>
     <div class="capture-body">
@@ -115,6 +118,7 @@
           <h2 data-i18n="greetingTitle">Happy Mid-Autumn Festival</h2>
           <p data-i18n="greetingBody">Wishing you a season of connection, creativity and bright new possibilities.</p>
         </div>
+        <div class="greeting-decor" aria-hidden="true"></div>
       </div>
       <div class="capture-actions">
         <button id="downloadBtn" class="primary" data-i18n="save">SAVE</button>
@@ -139,6 +143,6 @@
   <canvas id="captureCanvas" class="hidden"></canvas>
 </div>
 <div class="landscape-note" data-i18n="portraitOnly">Please rotate your phone back to portrait mode.</div>
-<script src="app.js?v=2.3"></script>
+<script src="app.js?v=2.6"></script>
 </body>
 </html>
