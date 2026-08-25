@@ -210,7 +210,7 @@ html:lang(zh-TW) .welcome-copy h1,html:lang(zh-CN) .welcome-copy h1{
    clipped silhouette instead of the element's rectangular box. */
 .band{
   position:relative;
-  height:130px;background-color:#204a7a;
+  height:260px;background-color:#204a7a;
   clip-path:url(#hairHoopClip);
   filter:drop-shadow(0 8px 14px rgba(0,0,0,.32));
   background-repeat:repeat;
@@ -228,10 +228,10 @@ html:lang(zh-TW) .welcome-copy h1,html:lang(zh-CN) .welcome-copy h1{
   content:'';position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(255,255,255,.10) 0,rgba(255,255,255,0) 32%,rgba(0,0,0,0) 62%,rgba(0,0,0,.16) 100%);
 }
-/* Text sits at the shape's visible-thick-zone center (~30% down the box),
-   not the box's geometric middle (50%) — the hair-hoop clip only fills
-   roughly the top 55%, so 50% centering would clip the text away. */
-.band span{position:absolute;z-index:1;top:30%;left:50%;transform:translate(-50%,-50%);
+/* Text sits at the shape's visible-thick-zone center (~44% down the box),
+   not the box's geometric middle (50%) — the hair-hoop clip is a thin arc,
+   so 50% centering can land text outside the visible sliver. */
+.band span{position:absolute;z-index:1;top:44%;left:50%;transform:translate(-50%,-50%);
   font-weight:900;letter-spacing:.2em;color:#fff1bf;text-shadow:0 1px 3px rgba(0,0,0,.35);
   white-space:nowrap;max-width:78%;overflow:hidden;text-overflow:ellipsis}
 

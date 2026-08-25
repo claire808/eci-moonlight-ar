@@ -269,11 +269,14 @@ function cssPattern(id){
 }
 function updateBand(){
   band.style.backgroundColor=bandColor;
-  // Taller than a flat-bar band would need: the hair-hoop clip-path only
-  // fills roughly the top ~55% of the box (the domed part), so the box
-  // itself has to be taller for the visible band to read as substantial.
-  band.style.height=currentStyle==='wide'?'158px':currentStyle==='sport'?'110px':'130px';
-  // border-radius stays the CSS default (999px pill) for every style — see styles.css .band
+  // Taller than a flat-bar band would need: the hair-hoop clip-path (see
+  // #hairHoopClip in index.html / styles.css .band) only fills a thin arc
+  // across the box, so the box itself has to be taller for the visible
+  // band to read as substantial. Font size scales with it for the same
+  // reason — the visible arc is thin, so text must stay small to fit.
+  const h=currentStyle==='wide'?310:currentStyle==='sport'?220:260;
+  band.style.height=h+'px';
+  bandText.style.fontSize=Math.round(h*0.1)+'px';
   const pattern=cssPattern(bandPattern);
   const tile=PATTERN_TILE[bandPattern]?`${PATTERN_TILE[bandPattern]}px ${PATTERN_TILE[bandPattern]}px`:'auto';
   band.style.backgroundImage=drawingData?`url(${drawingData}),${pattern}`:pattern;
@@ -367,9 +370,9 @@ function roundRect(c,x,y,w,h,r){if(c.roundRect){c.beginPath();c.roundRect(x,y,w,
 // the live preview's tapered Alice-band shape exactly.
 function hairHoopPath(c,x,y,w,h){
   const p=(fx,fy)=>[x+fx*w,y+fy*h];
-  const [x0,y0]=p(0.03,0.85),[x1,y1]=p(0.97,0.85);
-  const [cx1,cy1]=p(0.22,0.05),[cx2,cy2]=p(0.78,0.05);
-  const [cx3,cy3]=p(0.78,0.55),[cx4,cy4]=p(0.22,0.55);
+  const [x0,y0]=p(0.04,0.58),[x1,y1]=p(0.96,0.58);
+  const [cx1,cy1]=p(0.20,0.30),[cx2,cy2]=p(0.80,0.30);
+  const [cx3,cy3]=p(0.80,0.48),[cx4,cy4]=p(0.20,0.48);
   c.beginPath();
   c.moveTo(x0,y0);
   c.bezierCurveTo(cx1,cy1,cx2,cy2,x1,y1);
@@ -421,11 +424,11 @@ document.getElementById('captureBtn').onclick=()=>{
     const t2=mapLandmarkToBox(lastFaceLandmarks[356].x,lastFaceLandmarks[356].y,vw,vh,w,h,mirror,'stretch');
     rollRad=mapRollAngle(Math.atan2(lastFaceLandmarks[356].y-lastFaceLandmarks[127].y,lastFaceLandmarks[356].x-lastFaceLandmarks[127].x),mirror);
     bw=Math.hypot(t2.x-t1.x,t2.y-t1.y)*1.7;
-    bh=currentStyle==='wide'?h*0.188:currentStyle==='sport'?h*0.124:h*0.155;
+    bh=currentStyle==='wide'?h*0.376:currentStyle==='sport'?h*0.248:h*0.31;
     bx=anchor.x-bw/2; by=anchor.y-bh/2;
   } else { // fallback: no face was ever tracked this session — today's exact fixed box, unchanged
     bw=w*0.7; bx=(w-bw)/2;
-    bh=currentStyle==='wide'?h*0.188:currentStyle==='sport'?h*0.124:h*0.155; by=h*0.30;
+    bh=currentStyle==='wide'?h*0.376:currentStyle==='sport'?h*0.248:h*0.31; by=h*0.30;
   }
 
   // Draw the band on its own offscreen canvas (transparent background), so the
@@ -437,11 +440,11 @@ document.getElementById('captureBtn').onclick=()=>{
   bc.save(); bc.translate(bx+bw/2,by+bh/2); bc.rotate(rollRad); bc.translate(-(bx+bw/2),-(by+bh/2));
   bc.fillStyle=bandColor;hairHoopPath(bc,bx,by,bw,bh);bc.fill();drawPatternOnCanvas(bc,bx,by,bw,bh);drawRibTexture(bc,bx,by,bw,bh);
   const finish=()=>{
-    // Text sits at the shape's visible-thick-zone center (~30% down),
+    // Text sits at the shape's visible-thick-zone center (~44% down),
     // matching the live CSS .band span — the box's geometric middle (50%)
     // falls outside the hair-hoop clip's visible area.
-    bc.fillStyle='#fff0bd';bc.font=`700 ${Math.round(bh*0.22)}px Arial`;bc.textAlign='center';bc.textBaseline='middle';
-    bc.fillText(bandTextValue||'ECI',bx+bw/2,by+bh*0.30);
+    bc.fillStyle='#fff0bd';bc.font=`700 ${Math.round(bh*0.1)}px Arial`;bc.textAlign='center';bc.textBaseline='middle';
+    bc.fillText(bandTextValue||'ECI',bx+bw/2,by+bh*0.44);
     bc.restore();
     c.drawImage(bandCanvas,0,0);
     captureImage.src=captureCanvas.toDataURL('image/jpeg',.92);
